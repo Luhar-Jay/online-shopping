@@ -13,6 +13,7 @@ const AdminDashboard = () => {
 
   const { getAllProduct } = context;
   console.log(getAllProduct.length);
+  console.log(getAllProduct);
 
   return (
     <div className="mb-14">
