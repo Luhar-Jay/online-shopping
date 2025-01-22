@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/no-redundant-roles */
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../../components/layout/Layout";
 import { Trash } from "lucide-react";
@@ -8,8 +7,11 @@ import {
   incrementQuantity,
 } from "../../redux/cartSlice";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
+import BuyNowModal from "../../components/byNowModel/ByNowModel";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { fireDB } from "../../firebase/FirebaseConfig";
 
 // const products = [
 //   {
@@ -63,7 +65,15 @@ const CartPage = () => {
     dispatch(incrementQuantity(id));
   };
   const handleDecrement = (id) => {
-    dispatch(decrimentQuantity(id));
+    const item = cartItem.find((item) => item.id === id);
+    if (item) {
+      if (item.quantity > 1) {
+        dispatch(decrimentQuantity(id));
+      } else {
+        dispatch(deleteFromCart(item));
+        toast.success("Item removed from cart");
+      }
+    }
   };
 
   useEffect(() => {
@@ -79,6 +89,65 @@ const CartPage = () => {
   const cartTotapPrice = cartItem
     .map((item) => item.price * item.quantity)
     .reduce((preValue, currValue) => preValue + currValue, 0);
+
+  // user
+
+  const user = JSON.parse(localStorage.getItem("users"));
+
+  // address info state
+  const [addressInfo, setAddressInfo] = useState({
+    name: "",
+    address: "",
+    pinCode: "",
+    mobileNumber: "",
+    time: Timestamp.now(),
+    date: new Date().toLocaleString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    }),
+  });
+
+  const buyNowFunction = () => {
+    if (
+      addressInfo.name === "" ||
+      addressInfo.address === "" ||
+      addressInfo.pinCode === "" ||
+      addressInfo.mobileNumber === ""
+    ) {
+      return toast.error("All fields are required!");
+    }
+
+    const orderInfo = {
+      cartItem,
+      addressInfo,
+      email: user.email,
+      userid: user.uid,
+      status: "confirmed",
+      time: Timestamp.now(),
+      date: new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      }),
+    };
+
+    try {
+      const orderRef = collection(fireDB, "order");
+
+      addDoc(orderRef, orderInfo);
+
+      setAddressInfo({
+        name: "",
+        address: "",
+        pinCode: "",
+        mobileNumber: "",
+      });
+      toast.success("Order placed successfull");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <Layout>
@@ -105,7 +174,7 @@ const CartPage = () => {
                         price,
                         productImageUrl,
                         quantity,
-                        categroy,
+                        category,
                       } = item;
                       return (
                         <div key={item.id} className="">
@@ -130,16 +199,16 @@ const CartPage = () => {
                                   </div>
                                   <div className="mt-1 flex text-sm">
                                     <p className="text-sm text-gray-500">
-                                      {categroy}
+                                      {category}
                                     </p>
                                   </div>
                                   <div className="mt-1 flex items-end">
-                                    {/* <p className="text-xs font-medium text-gray-500 line-through">
-                                  {price}
-                                </p> */}
-                                    <p className="text-sm font-medium text-gray-900">
-                                      &nbsp;&nbsp;₹{price}
+                                    <p className="text-xs font-medium text-gray-500 ">
+                                      ₹{price}
                                     </p>
+                                    {/* <p className="text-sm font-medium text-gray-900">
+                                      &nbsp;&nbsp;₹{price}
+                                    </p> */}
                                     {/* &nbsp;&nbsp;
                               <p className="text-sm font-medium text-green-500">
                                 {product.discount}
@@ -256,9 +325,15 @@ const CartPage = () => {
                 </dl>
                 <div className="px-2 pb-4 font-medium text-green-700">
                   <div className="flex gap-4 mb-6">
-                    <button className="w-full px-4 py-3 text-center text-gray-100 bg-pink-600 border border-transparent dark:border-gray-700 hover:border-pink-500 hover:text-pink-700 hover:bg-pink-100 rounded-xl">
-                      Buy now
-                    </button>
+                    {user ? (
+                      <BuyNowModal
+                        addressInfo={addressInfo}
+                        setAddressInfo={setAddressInfo}
+                        buyNowFunction={buyNowFunction}
+                      />
+                    ) : (
+                      <Navigate to={"/login"} />
+                    )}
                   </div>
                 </div>
               </div>

@@ -55,9 +55,11 @@ const Navbar = () => {
         </li>
       )}
       {/* Admin */}
-      <li>
-        <Link to={"/admin-dashboard"}>Admin</Link>
-      </li>
+      {user?.role === "admin" && (
+        <li>
+          <Link to={"/admin-dashboard"}>Admin</Link>
+        </li>
+      )}
 
       {/* logout */}
       {user && (
