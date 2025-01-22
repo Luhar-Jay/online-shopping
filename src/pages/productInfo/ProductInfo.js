@@ -5,6 +5,9 @@ import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
 import Loader from "../../components/loader/Loader";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, deleteFromCart } from "../../redux/cartSlice";
+import toast from "react-hot-toast";
 
 const ProductInfo = () => {
   const context = useContext(myContext);
@@ -27,9 +30,23 @@ const ProductInfo = () => {
     }
   };
 
+  const cartItem = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
+
+  const addCart = (item) => {
+    dispatch(addToCart(item));
+    toast.success("Add to cart");
+  };
+
+  const deleteCart = (item) => {
+    dispatch(deleteFromCart(item));
+    toast.success("Detele from cart");
+  };
+
   useEffect(() => {
     getProductData();
-  }, []);
+    localStorage.setItem("cart", JSON.stringify(cartItem));
+  }, [cartItem]);
   return (
     <Layout>
       <section className="py-5 lg:py-16 font-poppins dark:bg-gray-800">
@@ -132,9 +149,21 @@ const ProductInfo = () => {
 
                   <div className="mb-6 " />
                   <div className="flex flex-wrap items-center mb-6">
-                    <button className="w-full px-4 py-3 text-center text-pink-600 bg-pink-100 border border-pink-600  hover:bg-pink-600 hover:text-gray-100 rounded-xl">
-                      Add to cart
-                    </button>
+                    {cartItem.some((p) => p.id === product.id) > 0 ? (
+                      <button
+                        onClick={() => deleteCart(product)}
+                        className="w-full px-4 py-3 text-center text-red-600 bg-red-100 border border-pink-600  hover:bg-red-600 hover:text-gray-100 rounded-xl"
+                      >
+                        Delete to cart
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => addCart(product)}
+                        className="w-full px-4 py-3 text-center text-pink-600 bg-pink-100 border border-pink-600  hover:bg-pink-600 hover:text-gray-100 rounded-xl"
+                      >
+                        Add to cart
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

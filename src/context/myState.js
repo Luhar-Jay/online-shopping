@@ -1,13 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
 import MyContext from "./myContext";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  QuerySnapshot,
-} from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { fireDB } from "../firebase/FirebaseConfig";
 const myState = ({ children }) => {
   const [loading, setLoading] = useState(false);
